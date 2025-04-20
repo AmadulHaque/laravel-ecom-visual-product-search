@@ -9,15 +9,25 @@ class WeaviateService
 {
     protected $client;
     protected $baseUrl;
+    protected $apiKey;
 
     public function __construct()
     {
         $this->baseUrl = env('WEAVIATE_URL', 'http://localhost:8080/v1');
+        $this->apiKey = env('WEAVIATE_API_KEY');
+
+        $headers = [
+            'Content-Type' => 'application/json',
+        ];
+
+        // Add Authorization header if API key is present
+        if ($this->apiKey) {
+            $headers['Authorization'] = 'Bearer ' . $this->apiKey;
+        }
+
         $this->client = new Client([
             'base_uri' => $this->baseUrl,
-            'headers' => [
-                'Content-Type' => 'application/json',
-            ],
+            'headers' => $headers,
         ]);
     }
 
@@ -61,6 +71,7 @@ class WeaviateService
     {
         $imageBase64 = $this->convertImageToBase64($imagePath);
 
+
         $data = [
             'class' => 'Product',
             'properties' => [
@@ -71,7 +82,7 @@ class WeaviateService
         ];
 
         try {
-            $response = $this->client->post('/objects', ['json' => $data]);
+            $response = $this->client->post('/v1/objects', ['json' => $data]);
             return json_decode($response->getBody(), true);
         } catch (\Exception $e) {
             Log::error('Error adding product: ' . $e->getMessage());
@@ -83,39 +94,22 @@ class WeaviateService
     {
         $imageBase64 = $this->convertImageToBase64($imagePath);
 
-        $query = [
-            'query' => '
-                {
-                    Get {
-                        Product(nearImage: {
-                            image: "' . $imageBase64 . '"
-                        }, limit: ' . $limit . ') {
-                            name
-                            price
-                            _additional {
-                                id
-                                certainty
-                            }
-                        }
-                    }
-                }
-            '
+        $data = [
+            'image' => $imageBase64,
+            'limit' => $limit,
+            'className' => 'Product'
         ];
 
         try {
-            $response = $this->client->post('/graphql', ['json' => $query]);
+            $response = $this->client->post('/v1/objects', ['json' => $data]);
             $result = json_decode($response->getBody(), true);
-
-            if (isset($result['data']['Get']['Product'])) {
-                return $result['data']['Get']['Product'];
-            }
-            return [];
+            dd($result);
+            return $result['objects'] ?? [];
         } catch (\Exception $e) {
             Log::error('Error searching similar images: ' . $e->getMessage());
             return [];
         }
     }
-
     protected function convertImageToBase64($imagePath)
     {
         $imageData = file_get_contents($imagePath);

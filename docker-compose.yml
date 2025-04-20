@@ -1,27 +1,27 @@
 services:
   weaviate:
-    image: semitechnologies/weaviate:1.18.0
-    platform: linux/amd64  # Force AMD64 emulation
+    image: cr.weaviate.io/semitechnologies/weaviate:1.23.5
     ports:
       - "8080:8080"
     environment:
       QUERY_DEFAULTS_LIMIT: 25
       AUTHENTICATION_ANONYMOUS_ACCESS_ENABLED: 'true'
-      PERSISTENCE_DATA_PATH: '/var/lib/weaviate'
       DEFAULT_VECTORIZER_MODULE: 'img2vec-neural'
       ENABLE_MODULES: 'img2vec-neural'
-      IMG2VEC_NEURAL_HOST: 'http://t2v-neural:8080'
-      IMG2VEC_NEURAL_IMAGE_HEIGHT: '224'
-      IMG2VEC_NEURAL_IMAGE_WIDTH: '224'
+      IMAGE_INFERENCE_API: 'http://t2v-neural:8080'  # Critical addition
+      CLUSTER_HOSTNAME: 'node1'
     depends_on:
-      - t2v-neural
+      t2v-neural:
+        condition: service_healthy
     restart: unless-stopped
 
   t2v-neural:
     image: semitechnologies/img2vec-pytorch:resnet50
-    platform: linux/amd64  # Force AMD64 emulation
-    environment:
-      ENABLE_CUDA: '0'
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8080/.well-known/ready"]
+      interval: 30s
+      timeout: 30s
+      retries: 3
     ports:
       - "8081:8080"
     restart: unless-stopped

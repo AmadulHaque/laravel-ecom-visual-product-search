@@ -32,6 +32,7 @@ class ProductService
         if (isset($imagePath)) {
             $fullImagePath = storage_path('app/public/' . $imagePath);
             $weaviateResponse = $this->weaviateService->addProduct($data, $fullImagePath);
+
             if ($weaviateResponse) {
                 $product->update(['weaviate_id' => $weaviateResponse['id']]);
             }
@@ -51,7 +52,7 @@ class ProductService
         // Delete temporary image
         Storage::disk('public')->delete($searchImagePath);
 
-
+// dd($similarProducts);
         $results = [];
         foreach ($similarProducts as $similar) {
             $product = Product::where('weaviate_id', $similar['_additional']['id'])->first();
@@ -63,14 +64,13 @@ class ProductService
             }
         }
 
+        return $results;
         // Save the search results image
-        $resultsImagePath = 'searches/' . uniqid() . '.jpg';
-        Storage::disk('public')->copy($searchImagePath, $resultsImagePath);
+        // $resultsImagePath = 'searches/' . uniqid() . '.jpg';
+        // Storage::disk('public')->copy($searchImagePath, $resultsImagePath);
 
-        return view('products.search-results', [
-            'results' => $results,
-            'searchImage' => $resultsImagePath,
-        ]);
+
+
     }
 
     public function initWeaviate(): mixed

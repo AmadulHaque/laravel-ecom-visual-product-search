@@ -42,21 +42,31 @@ class ProductController extends Controller
     public function search(Request $request)
     {
         $validated = $request->validate([
-            'image' => 'required|image|mimes:jpeg,png,jpg,gif|max:2048',
+            'image' => 'required|image|mimes:jpeg,png,jpg,gif,webp|max:2048',
         ]);
 
        try {
-        $this->productService->search($validated);
+            $result = $this->productService->search($validated);
+            return  $result;
+            return redirect()->route(route: 'products.index')
+                ->with('success', 'Product found successfully!');
        } catch (\Throwable $th) {
-            return redirect()->route('products.create')
-            ->with('error', 'Product not added successfully! Error: ' . $th->getMessage());
+            return redirect()->route('products.index')
+            ->with('error', 'Error: ' . $th->getMessage());
        }
     }
 
+
     public function initWeaviate()
     {
-        $result = $this->productService->initWeaviate();
-        return redirect()->back()->with('weaviate_status', $result ? 'Schema created!' : 'Error creating schema');
+        try {
+            $this->productService->initWeaviate();
+            return redirect()->route('products.create')
+                ->with('success', 'Weaviate initialized successfully!');
+        } catch (\Throwable $th) {
+            return redirect()->route('products.create')
+                ->with('error', 'Weaviate not initialized successfully! Error: ' . $th->getMessage());
+        }
     }
 
 
