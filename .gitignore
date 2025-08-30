@@ -21,3 +21,6 @@ yarn-error.log
 /.nova
 /.vscode
 /.zed
+/services/qdrant_data
+/services/qdrant_data/.lock
+/services/venv

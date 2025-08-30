@@ -35,4 +35,8 @@ return [
         ],
     ],
 
+    'clip' => [
+        'base_url' => env('CLIP_SERVICE_BASE_URL', 'http://localhost:5000'),
+    ],
+
 ];

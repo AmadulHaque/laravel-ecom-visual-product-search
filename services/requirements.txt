@@ -1,0 +1,8 @@
+# services/requirements.txt
+torch
+torchvision
+clip@git+https://github.com/openai/CLIP.git
+flask
+pillow
+numpy
+qdrant-client
